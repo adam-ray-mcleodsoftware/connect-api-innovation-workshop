@@ -1,7 +1,8 @@
 # Use Node.js 20 devcontainer base image
 FROM mcr.microsoft.com/devcontainers/javascript-node:20
 
-RUN id -u vscode &>/dev/null || useradd -m vscode
+RUN useradd -ms /bin/bash vscode && \
+    echo 'vscode ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 RUN apt-get update && apt-get install -y \
     curl \
