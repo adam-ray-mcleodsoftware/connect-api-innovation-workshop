@@ -1,0 +1,3 @@
+may have to run openapi-generator-cli once first.  possibly sudo.
+
+chmod +x *.sh
