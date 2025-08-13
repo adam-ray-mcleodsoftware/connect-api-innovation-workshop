@@ -56,7 +56,7 @@ export default function Header() {
       clientId: process.env.NEXT_PUBLIC_OIDC_CLIENT_ID || '',
       issuer: process.env.NEXT_PUBLIC_OIDC_ISSUER || 'https://auth.mcleodsoftware.com',
       redirectUri: `${window.location.origin}/auth/callback`,
-      scope: 'openid profile email',
+      scope: 'openid profile email orderrequests:create trackandtrace:read',
     };
 
     // Build authorization URL and redirect

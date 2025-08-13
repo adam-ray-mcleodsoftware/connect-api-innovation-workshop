@@ -67,3 +67,35 @@ export function decodeJWT(token: string): any {
     return null;
   }
 }
+
+// Get access token from request (for server-side API routes)
+export async function getAccessToken(request: Request): Promise<string | null> {
+  try {
+    // Get the Authorization header
+    const authHeader = request.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      return authHeader.substring(7); // Remove "Bearer " prefix
+    }
+    
+    // If no Authorization header, try to get from cookies as fallback
+    const cookies = request.headers.get('cookie');
+    if (!cookies) {
+      return null;
+    }
+    
+    // Parse cookies to find access_token
+    const cookieMap = new Map<string, string>();
+    cookies.split(';').forEach(cookie => {
+      const [key, value] = cookie.trim().split('=');
+      if (key && value) {
+        cookieMap.set(key, decodeURIComponent(value));
+      }
+    });
+    
+    const accessToken = cookieMap.get('access_token');
+    return accessToken || null;
+  } catch (error) {
+    console.error('Failed to get access token:', error);
+    return null;
+  }
+}
