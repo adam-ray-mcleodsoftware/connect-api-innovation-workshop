@@ -326,7 +326,7 @@ export class DefaultApi extends runtime.BaseAPI {
      * ### Getting started  If you want to try out the API now, try our sandbox by filling out the following information:  |Header|Value|  |------|-----|  |Authorization (Auth/Token)|[Get quick access token here](https://controlhub.mcleodsoftware.com/?action=Sandbox)  |customerId|1CHC|  |X-Api-Key|[Get a trial key here](https://innovationhub.mcleodsoftware.com/apis)  |X-Mcld-Tenant|2|  |X-Datafusion-Profile|(blank)|    ### Overview  This endpoint provides a detailed view of a specific order within the Transportation Management System (TMS), allowing users to retrieve comprehensive order information. It efficiently fetches and returns details like status, customer information, order value, commodity details, equipment details, stops, and other necessary details of the order.
      * Get an Order Detail
      */
-    async getOrderDetailRaw(requestParameters: GetOrderDetailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<Array<OrderRequest>>> {
+    async getOrderDetailRaw(requestParameters: GetOrderDetailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<OrderRequest>> {
         if (requestParameters['customerId'] == null) {
             throw new runtime.RequiredError(
                 'customerId',
@@ -384,14 +384,14 @@ export class DefaultApi extends runtime.BaseAPI {
             query: queryParameters,
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => jsonValue.map(OrderRequestFromJSON));
+        return new runtime.JSONApiResponse(response, (jsonValue) => OrderRequestFromJSON(jsonValue));
     }
 
     /**
      * ### Getting started  If you want to try out the API now, try our sandbox by filling out the following information:  |Header|Value|  |------|-----|  |Authorization (Auth/Token)|[Get quick access token here](https://controlhub.mcleodsoftware.com/?action=Sandbox)  |customerId|1CHC|  |X-Api-Key|[Get a trial key here](https://innovationhub.mcleodsoftware.com/apis)  |X-Mcld-Tenant|2|  |X-Datafusion-Profile|(blank)|    ### Overview  This endpoint provides a detailed view of a specific order within the Transportation Management System (TMS), allowing users to retrieve comprehensive order information. It efficiently fetches and returns details like status, customer information, order value, commodity details, equipment details, stops, and other necessary details of the order.
      * Get an Order Detail
      */
-    async getOrderDetail(requestParameters: GetOrderDetailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<Array<OrderRequest>> {
+    async getOrderDetail(requestParameters: GetOrderDetailRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<OrderRequest> {
         const response = await this.getOrderDetailRaw(requestParameters, initOverrides);
         return await response.value();
     }
