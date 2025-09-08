@@ -13,6 +13,8 @@ interface OrderRequestRecord {
     orderId?: string;
   };
   orderDetail: any;
+  locations: any[];
+  callins: any[];
 }
 
 interface DashboardData {
@@ -202,6 +204,17 @@ export default function Home() {
     }
   };
 
+  const getTrackingStatusColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'intransit': 
+      case 'inprogress': return 'text-blue-600 bg-blue-50';
+      case 'delivered': return 'text-green-600 bg-green-50';
+      case 'available': return 'text-yellow-600 bg-yellow-50';
+      case 'cancelled': return 'text-red-600 bg-red-50';
+      default: return 'text-gray-600 bg-gray-50';
+    }
+  };
+
   return (
     <div className="container mx-auto p-6 max-w-7xl">
       <div className="space-y-6">
@@ -333,16 +346,57 @@ export default function Home() {
                       <h4 className="font-medium text-gray-700 mb-2">🚚 Tracking Status</h4>
                       {order.orderDetail ? (
                         <div className="text-sm space-y-1">
-                          <div>Status: {order.orderDetail.status || 'Unknown'}</div>
+                          <div>
+                            Status: <span className={`px-2 py-1 rounded text-xs font-medium ${getTrackingStatusColor(order.orderDetail.status || order.orderDetail.orderStatus || 'unknown')}`}>
+                              {order.orderDetail.status || order.orderDetail.orderStatus || 'Unknown'}
+                            </span>
+                          </div>
                           <div>{formatDate(order.orderDetail.shipperStop.scheduledArrivalEarly)} ({order.orderDetail.shipperStop.city}, {order.orderDetail.shipperStop.state}) → {formatDate(order.orderDetail.consigneeStop.scheduledArrivalEarly)} ({order.orderDetail.consigneeStop.city}, {order.orderDetail.consigneeStop.state})</div>
-                          <div>Stops: {order.orderDetail.intermediateStops?.length}</div>
+                          <div>Stops: {order.orderDetail.intermediateStops?.length || 0}</div>
                         </div>
-                      ) : order.id ? (
+                      ) : order.orderRequest.status?.orderId ? (
                         <div className="text-sm text-yellow-600">Fetching tracking data...</div>
                       ) : (
                         <div className="text-sm text-gray-500">No tracking data available yet</div>
                       )}
                     </div>
+
+                    {/* Locations */}
+                    {order.locations && order.locations.length > 0 && (
+                      <div className="bg-blue-50 p-3 rounded">
+                        <h4 className="font-medium text-blue-700 mb-2">📍 Locations ({order.locations.length})</h4>
+                        <div className="text-sm space-y-1 max-h-32 overflow-y-auto">
+                          {order.locations.slice(0, 5).map((location: any, idx: number) => (
+                            <div key={idx} className="flex justify-between">
+                              <span>{location.type === 'Callin' ? `${location.city}, ${location.state}` : `${location.position?.latitude?.toFixed(4)}, ${location.position?.longitude?.toFixed(4)}`}</span>
+                              <span className="text-gray-500">{location.type}</span>
+                            </div>
+                          ))}
+                          {order.locations.length > 5 && (
+                            <div className="text-gray-500 text-xs">... and {order.locations.length - 5} more</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Callins */}
+                    {order.callins && order.callins.length > 0 && (
+                      <div className="bg-green-50 p-3 rounded">
+                        <h4 className="font-medium text-green-700 mb-2">📞 Call-ins ({order.callins.length})</h4>
+                        <div className="text-sm space-y-1 max-h-32 overflow-y-auto">
+                          {order.callins.slice(0, 3).map((callin: any, idx: number) => (
+                            <div key={idx} className="border-l-2 border-green-300 pl-2">
+                              <div className="font-medium">{callin.eventType}</div>
+                              <div className="text-gray-600">{callin.message}</div>
+                              <div className="text-gray-500 text-xs">{formatDate(callin.timestamp)} • {callin.user}</div>
+                            </div>
+                          ))}
+                          {order.callins.length > 3 && (
+                            <div className="text-gray-500 text-xs">... and {order.callins.length - 3} more</div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}

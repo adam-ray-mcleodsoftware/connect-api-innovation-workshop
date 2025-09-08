@@ -10,6 +10,8 @@ interface OrderRequestRecord {
   createdAt: string;
   orderRequest: OrderRequest;
   orderDetail: any;
+  locations: any[];
+  callins: any[];
   lastUpdated: string;
 }
 
@@ -90,10 +92,44 @@ export async function GET(request: NextRequest) {
             authorization: `Bearer ${accessToken}`
           });
           
-          console.log(`Updated order ${updatedRecord.orderRequest.status.orderId}`);
+          // Extract locations from order detail (stops and progress updates)
+          updatedRecord.locations = [];
+          if (updatedRecord.orderDetail?.stops) {
+            updatedRecord.locations = updatedRecord.orderDetail.stops.map((stop: any) => ({
+              type: 'stop',
+              ...stop
+            }));
+          }
+          if (updatedRecord.orderDetail?.progressUpdates) {
+            const progressLocations = updatedRecord.orderDetail.progressUpdates
+              .map((update: any) => ({
+                type: update.event,
+                timestamp: update.timestamp,
+                position: update.position,
+                milesToConsignee: update.milesToConsignee,
+              }));
+            updatedRecord.locations = [...updatedRecord.locations, ...progressLocations];
+          }
+          
+          // Extract callins from order detail (typically in orderEvents or notes)
+          updatedRecord.callins = [];
+          if (updatedRecord.orderDetail?.orderEvents) {
+            updatedRecord.callins = updatedRecord.orderDetail.orderEvents
+              .filter((event: any) => event.event === 'CallIn')
+              .map((event: any) => ({
+                timestamp: event.timestamp,
+                eventType: event.event,
+                message: event.message,
+                user: event.user
+              }));
+          }
+          
+          console.log(`Updated order ${updatedRecord.orderRequest.status.orderId} with ${updatedRecord.locations.length} locations and ${updatedRecord.callins.length} callins`);
         } catch (trackingError) {
           console.log(`Failed to fetch tracking data for order ${updatedRecord.orderRequest.status.orderId}:`, trackingError);
           // Keep existing tracking data if fetch fails
+          updatedRecord.locations = updatedRecord.locations || [];
+          updatedRecord.callins = updatedRecord.callins || [];
         }
       }
       
@@ -108,12 +144,32 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     // Calculate summary statistics
+    console.log('=== DEBUGGING SUMMARY CALCULATION ===');
+    orderRequests.forEach((r, index) => {
+      console.log(`Order ${index + 1}:`, {
+        orderId: r.orderRequest.status?.orderId,
+        orderRequestAction: r.orderRequest.status?.action,
+        hasOrderDetail: !!r.orderDetail,
+        orderDetailKeys: r.orderDetail ? Object.keys(r.orderDetail) : null,
+        orderStatus: r.orderDetail?.orderStatus,
+        status: r.orderDetail?.status,
+        rawOrderDetail: r.orderDetail
+      });
+    });
+    
     const summary = {
       totalOrders: orderRequests.length,
       pendingOrders: orderRequests.filter(r => r.orderRequest.status?.action === OrderRequestStatusActionEnum.PendingInput).length,
       acceptedOrders: orderRequests.filter(r => r.orderRequest.status?.action === OrderRequestStatusActionEnum.Accepted).length,
-      inTransitOrders: orderRequests.filter(r => r.orderDetail?.orderStatus === 'InTransit').length,
+      inTransitOrders: orderRequests.filter(r => {
+        const isInTransit = r.orderDetail?.status === 'InProgress';
+        console.log(`Order ${r.orderRequest.status?.orderId} - isInTransit: ${isInTransit}, orderStatus: ${r.orderDetail?.orderStatus}, status: ${r.orderDetail?.status}`);
+        return isInTransit;
+      }).length,
     };
+    
+    console.log('Final summary:', summary);
+    console.log('=== END DEBUGGING ===');
 
     const dashboardData: DashboardData = {
       orderRequests,
@@ -209,6 +265,8 @@ export async function POST(request: NextRequest) {
         createdAt: new Date().toISOString(),
         orderRequest: result,
         orderDetail: null,
+        locations: [],
+        callins: [],
         lastUpdated: ""
       };
 
