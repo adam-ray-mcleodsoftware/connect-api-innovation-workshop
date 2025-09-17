@@ -11,7 +11,6 @@ interface OrderRequestRecord {
   orderRequest: OrderRequest;
   orderDetail: any;
   locations: any[];
-  callins: any[];
   lastUpdated: string;
 }
 
@@ -111,25 +110,12 @@ export async function GET(request: NextRequest) {
             updatedRecord.locations = [...updatedRecord.locations, ...progressLocations];
           }
           
-          // Extract callins from order detail (typically in orderEvents or notes)
-          updatedRecord.callins = [];
-          if (updatedRecord.orderDetail?.orderEvents) {
-            updatedRecord.callins = updatedRecord.orderDetail.orderEvents
-              .filter((event: any) => event.event === 'CallIn')
-              .map((event: any) => ({
-                timestamp: event.timestamp,
-                eventType: event.event,
-                message: event.message,
-                user: event.user
-              }));
-          }
           
-          console.log(`Updated order ${updatedRecord.orderRequest.status.orderId} with ${updatedRecord.locations.length} locations and ${updatedRecord.callins.length} callins`);
+          console.log(`Updated order ${updatedRecord.orderRequest.status.orderId} with ${updatedRecord.locations.length} locations`);
         } catch (trackingError) {
           console.log(`Failed to fetch tracking data for order ${updatedRecord.orderRequest.status.orderId}:`, trackingError);
           // Keep existing tracking data if fetch fails
           updatedRecord.locations = updatedRecord.locations || [];
-          updatedRecord.callins = updatedRecord.callins || [];
         }
       }
       
@@ -266,7 +252,6 @@ export async function POST(request: NextRequest) {
         orderRequest: result,
         orderDetail: null,
         locations: [],
-        callins: [],
         lastUpdated: ""
       };
 

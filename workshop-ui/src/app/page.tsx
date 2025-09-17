@@ -368,7 +368,9 @@ export default function Home() {
                         <div className="text-sm space-y-1 max-h-32 overflow-y-auto">
                           {order.locations.slice(0, 5).map((location: any, idx: number) => (
                             <div key={idx} className="flex justify-between">
-                              <span>{location.type === 'Callin' ? `${location.city}, ${location.state}` : `${location.position?.latitude?.toFixed(4)}, ${location.position?.longitude?.toFixed(4)}`}</span>
+                              <span>{location.type === 'Callin' ? `${location.position.city}, ${location.position.state}` : `${location.position?.latitude?.toFixed(4)}, ${location.position?.longitude?.toFixed(4)}`}
+                                { location.milesToConsignee > 0 && ` • ${location.milesToConsignee.toFixed(1)} mi to consignee` }
+                              </span>
                               <span className="text-gray-500">{location.type}</span>
                             </div>
                           ))}
@@ -379,24 +381,6 @@ export default function Home() {
                       </div>
                     )}
 
-                    {/* Callins */}
-                    {order.callins && order.callins.length > 0 && (
-                      <div className="bg-green-50 p-3 rounded">
-                        <h4 className="font-medium text-green-700 mb-2">📞 Call-ins ({order.callins.length})</h4>
-                        <div className="text-sm space-y-1 max-h-32 overflow-y-auto">
-                          {order.callins.slice(0, 3).map((callin: any, idx: number) => (
-                            <div key={idx} className="border-l-2 border-green-300 pl-2">
-                              <div className="font-medium">{callin.eventType}</div>
-                              <div className="text-gray-600">{callin.message}</div>
-                              <div className="text-gray-500 text-xs">{formatDate(callin.timestamp)} • {callin.user}</div>
-                            </div>
-                          ))}
-                          {order.callins.length > 3 && (
-                            <div className="text-gray-500 text-xs">... and {order.callins.length - 3} more</div>
-                          )}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               ))}
