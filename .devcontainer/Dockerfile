@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install -y \
     curl \
     jq \
     unzip \
-    openjdk-17-jre-headless
+    openjdk-21-jre-headless
 
 # yq (Go-based, better compatibility)
 RUN curl -Lo /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 \
